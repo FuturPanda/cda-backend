@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Notifications</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+</head>
+<body>
+<h1>Receiving notifications</h1>
+
+<h2> Polling </h2>
+<p>The client sends requests repeatedly to the back, wait for the response and wait a certain time before requesting again depending of the server response. The connection is close just after the response. If the response need times, the thread http thread is blocked.</p>
+<button onclick="sendAndReceive()"> Poll </button>
+<div id="received"></div>
+
+<h2> Long-Polling </h2>
+<p>With long-polling a client sends a request to a server. If the server has no new data, it just holds the connection open and waits until data is available. Once the server has data (message) for the client, it uses the connection and sends it back to the client. Then the connection is closed.
+</p>
+<button onclick="initiateLongPolling()"> Start Long Polling </button>
+<h3> Status Long Poll = <span  id="statusPoll" > Not started </span></h3>
+<div class="row input-text border">
+    <div class="col-md-10">
+        <input type="text" class="btn-block" id="msgToPoll" />
+    </div>
+    <div class="col-md-2">
+        <button type="button" class="btn btn-primary btn-block btn-lg" id="sendLongPoll" onclick="sendMessageToPoll()">
+            Send
+        </button>
+    </div>
+</div>
+<div id="receivedAsync"></div>
+
+<h2> Server Sent Event (unidirectionnal from server to client) </h2>
+<button onclick="subscribe()"> Subscribe </button>
+<div id="events"></div>
+
+<h2> WebSockets : Bi-directionnal </h2>
+<button onclick="openSocket()"> Open Socket </button>
+<h3> Status WebSocket = <span  id="statusSocket" > </span></h3>
+<div class="row input-text border">
+    <div class="col-md-10">
+        <input type="text" class="btn-block" id="msg" />
+    </div>
+    <div class="col-md-2">
+        <button type="button" class="btn btn-primary btn-block btn-lg" id="send" onclick="sendMessage()">
+            Send
+        </button>
+    </div>
+</div>
+<div id="socketEvents"></div>
+<h2> Test Open Ai </h2>
+<div class="row input-text border">
+    <div class="col-md-10">
+        <input type="text" class="btn-block" id="openai" />
+    </div>
+    <div class="col-md-2">
+        <button type="button" class="btn btn-primary btn-block btn-lg" id="sendai" onclick="sendOpenAiRequest()">
+            Send
+        </button>
+    </div>
+</div>
+<div id="openaiResponse"></div>
+
+
+<script>
+    let subscribed = false
+    let eventSource
+    let statusWebSocket = document.getElementById("statusSocket")
+    let webSocket
+    const subscribe = () => {
+        if(subscribed) {
+            eventSource.close()
+            subscribed = false
+        }
+        else {
+            eventSource = new EventSource("/api/v1/event/subscribe");
+
+            eventSource.onmessage = (event) => {
+                const div = document.createElement("div");
+                div.textContent = `Event received: ${event.data}`;
+                document.getElementById("events").appendChild(div);
+            };
+
+            eventSource.onerror = (error) => {
+                console.error("Error occurred:", error);
+                eventSource.close();
+            };
+            subscribed = true
+        }
+    }
+
+    const sendAndReceive = async () => {
+        const response = await fetch("/api/v1/event/post", {method : "POST"})
+        const div = document.createElement("div");
+        div.textContent = `Event received: ${response}`;
+        document.getElementById("received").appendChild(div);
+    }
+
+    const sendOpenAiRequest = async () => {
+        const response = await fetch("/api/v1/link", {method : "POST"})
+        const text = await response.json()
+        console.log(text)
+    }
+
+    const openSocket = () => {
+        statusWebSocket.innerText = statusWebSocket.innerText === "Open" ? "Close" : "Open"
+        webSocket = new SockJS("/api/v1/events/websocket")
+        webSocket.onmessage = (message) => {
+            console.log("receiving " + message)
+            const div = document.createElement("div");
+            div.textContent = `Message from socket: ${message.toString()}`;
+            document.getElementById("socketEvents").appendChild(div);
+        }
+        webSocket.onerror = () => {}
+        webSocket.onopen = () => {
+            console.log("connection opened")
+        }
+    }
+
+    async function initiateLongPolling() {
+        try {
+            const response = await fetch("/api/v1/event/long-polling");
+            if (response.ok) {
+                const data = await response.text();
+                const div = document.createElement("div");
+                div.textContent = `Message Received: ${data}`;
+                document.getElementById("receivedAsync").appendChild(div);
+                await initiateLongPolling();
+            }
+            else if(response.status === 408){
+                await initiateLongPolling()
+            }
+            else {
+                console.log("not ok " + response.body)
+            }
+        } catch (error) {
+            console.error("Error during long polling:", error);
+        }
+    }
+
+    async function sendMessageToPoll(){
+        try {
+            const data = document.getElementById("msgToPoll").value
+            const response = await fetch("/api/v1/event/notify", {
+                method: "POST",
+                body: data
+            });
+        } catch (error) {
+            console.error("Error during fetching:", error);
+        }
+    }
+
+    function sendMessage() {
+        console.log(document.getElementById("msg").value)
+        webSocket.send(document.getElementById("msg").value);
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+spring:
+  liquibase:
+    change-log: classpath:/db/master.xml
+    contexts: standard
+  messages:
+    basename: i18n/messages
+    always-use-message-format: true
+  mvc:
+    log-resolved-exception: false
+  threads.virtual.enabled: true
+app:
+  openai:
+    model: gpt-3.5-turbo
+    api-url: https://api.openai.com
+    api-key: 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

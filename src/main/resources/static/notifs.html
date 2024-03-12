@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Notification</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+</head>
+<body>
+
+<h1>Système de notifications</h1>
+
+<p>Quatre possibilités : polling, Long-Polling, Server Sent Event, et WebSocket.</p>
+
+<div class="row input-text border" id="sender">
+    <div class="col-md-10">
+        <input type="text" class="btn-block" id="msg" />
+    </div>
+    <div class="col-md-2">
+        <button type="button" class="btn btn-primary btn-block btn-lg" id="send" onclick="somethingHappen()">
+            Envoyer un évènement en db
+        </button>
+
+    </div>
+</div>
+
+<h2> Polling -- Status :<span id="statusPoll"> disconnected </span></h2>
+<p> Requètes du client vers le serveur espacé d'un délay défini</p>
+<button type="button" class="btn btn-primary btn-block btn-lg"  onclick="initPolling()">
+    Init Polling
+</button>
+<p>Notification : <span id="notifPoll"></span></p>
+
+<h2> Long Polling -- Status : <span id="statusLongPoll"> disconnected </span></h2>
+<p> La requète du client est fermé seulement lorsque les données sont reçues ou après un timeout </p>
+<button type="button" class="btn btn-primary btn-block btn-lg" onclick="initLongPolling()">
+    Init Long Polling
+</button>
+<p>Notification : <span id="notifLongPoll"></span></p>
+
+<h2> Server Sent event -- Status :<span id="statusSse"> disconnected </span></h2>
+<p> Le client s'inscrit auprès du serveur et la connexion unidirectionnel du serveur vers le client est maintenant, notamment grâce à un "heartbeat". Suit le protocole Http </p>
+<button type="button" class="btn btn-primary btn-block btn-lg" onclick="initSse()">
+    Init Sse
+</button>
+<p>Notification : <span id="notifSse"></span></p>
+
+<h2> Websocket -- Status :<span id="statusWS"> disconnected </span></h2>
+<p>Connection bidirectionnelle sur le protocole TCP</p>
+<button type="button" class="btn btn-primary btn-block btn-lg" onclick="initWS()">
+    Init WebSocket
+</button>
+<p>Notification : <span id="notifWS"></span></p>
+
+<script>
+    let webSocket
+    let timeButtonPressed = Date.now()
+    let status = {
+        connected : "connected",
+        disconnected : "disconnected",
+        polling : false,
+        idPolling: 0,
+        longPolling : false,
+        sse : false,
+        ws : false
+    }
+    const somethingHappen = async () => {
+        try {
+            const data = document.getElementById("msg").value
+            timeButtonPressed = Date.now()
+            await fetch("/api/v1/event/notify", {
+                method: "POST",
+                body: data
+            });
+            webSocket?.send(data);
+            appendInfoTo(`${timeButtonPressed} ${data} sent to /api/v1/event/notify`,"sender" )
+        } catch (error) {
+            console.error("Error during fetching:", error);
+        }
+    }
+
+    const initPolling = async () => {
+        if(status.polling){
+            clearInterval(status.idPolling)
+            status.polling = false
+        }
+        else {
+            status.polling = true
+            status.idPolling = setInterval( async () => {
+                try {
+                    const response = await fetch("/api/v1/event/notification");
+                    response.text().then( (data) => {
+                            if(data) {
+                                appendInfoTo(`Time : ${Date.now()- timeButtonPressed}ms - Message Received : ${data}`, "notifPoll")
+                            }
+                        }
+                    )
+                } catch (error) {
+                    console.error("Error during polling:", error);
+                }
+            },  1000)
+        }
+        toggleStatus("statusPoll")
+    }
+    const initLongPolling = async () => {
+        toggleStatus("statusLongPoll")
+        status.longPolling = true
+        try {
+            console.log("connecting long poll")
+            const response = await fetch("/api/v1/event/long-polling");
+            console.log(response)
+            if (response.ok) {
+                const data = await response.text();
+                console.log(data)
+                appendInfoTo(`Time : ${Date.now()- timeButtonPressed}ms - Message Received: ${data}`,"notifLongPoll" )
+                await initLongPolling();
+            }
+            else if(response.status === 408){
+                await initLongPolling()
+            }
+        } catch (error) {
+            console.error("Error during long polling:", error);
+        }
+    }
+
+    const initSse = () => {
+        toggleStatus("statusSse")
+        let eventSource = new EventSource("/api/v1/event/subscribe");
+
+        eventSource.onmessage = (event) => {
+            if(event.data !== "heartbeat") {
+                appendInfoTo(`Time : ${Date.now()- timeButtonPressed}ms - Event received: ${event.data}`,"notifSse" )
+            }
+        };
+
+        eventSource.onerror = (error) => {
+            console.error("Error occurred:", error);
+            eventSource.close();
+        };
+    }
+
+    const initWS = () => {
+        toggleStatus("statusWS")
+        webSocket = new SockJS("/api/v1/events/websocket")
+        webSocket.onmessage = (message) => {
+            console.log("receiving " + message.data)
+            appendInfoTo(`Time : ${Date.now()- timeButtonPressed}ms - Message from socket: ${message.data}`,"notifWS" )
+        }
+        webSocket.onerror = () => {}
+        webSocket.onopen = () => {
+            console.log("connection opened")
+        }
+    }
+
+    function appendInfoTo(info, parentId) {
+        const div = document.createElement("div");
+        div.textContent = info;
+        document.getElementById(parentId).appendChild(div);
+    }
+    function toggleStatus(id){
+        let statusDisplay = document.getElementById(id)
+        statusDisplay.innerText = (statusDisplay.innerText === status.connected ) ? status.disconnected : status.connected
+    }
+
+    const sendOpenAiRequest = async () => {
+        const response = await fetch("/api/v1/link", {method : "POST"})
+        const text = await response.json()
+        console.log(text)
+    }
+</script>
+
+</body>
+</html>

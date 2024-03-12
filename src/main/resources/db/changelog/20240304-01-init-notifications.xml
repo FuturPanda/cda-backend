@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20240228-01" author="steevy">
+
+        <!-- app_user -->
+        <createTable tableName="app_user">
+            <column name="id" type="bigint" autoIncrement="${autoIncrement}">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="email" type="varchar(100)">
+                <constraints unique="true" nullable="false" uniqueConstraintName="ux_user_email"/>
+            </column>
+            <column name="password" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="first_name" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_name" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- document -->
+        <createTable tableName="document">
+            <column name="id" type="bigint" autoIncrement="${true}">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="varchar(355)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- notification -->
+        <createTable tableName="notification">
+            <column name="id" type="bigint" autoIncrement="${true}">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="app_user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="document_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseColumnNames="app_user_id"
+                                 baseTableName="notification"
+                                 constraintName="fk_notif_user_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="app_user"/>
+        <addForeignKeyConstraint baseColumnNames="document_id"
+                                 baseTableName="notification"
+                                 constraintName="fk_notif_document_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="document"/>
+
+        <insert tableName="app_user">
+            <column name="id">1</column>
+            <column name="email">immoaugmente@gmail.com</column>
+            <column name="password">{noop}123456</column>
+            <column name="first_name">Aurélien</column>
+            <column name="last_name">CAMART</column>
+        </insert>
+
+        <insert tableName="app_user">
+            <column name="id">2</column>
+            <column name="email">immoaugmente+agency@gmail.com</column>
+            <column name="password">{noop}123456</column>
+            <column name="first_name">Aurélien</column>
+            <column name="last_name">CAMART</column>
+        </insert>
+
+
+        <insert tableName="document">
+            <column name="id">1</column>
+            <column name="title">Hello i'm a document</column>
+        </insert>
+
+        <insert tableName="document">
+            <column name="id">2</column>
+            <column name="title">The secondary is legendary</column>
+        </insert>
+
+        <insert tableName="notification">
+            <column name="id">1</column>
+            <column name="app_user_id">1</column>
+            <column name="document_id">2</column>
+        </insert>
+
+
+        <insert tableName="notification">
+            <column name="id">2</column>
+            <column name="app_user_id">1</column>
+            <column name="document_id">1</column>
+        </insert>
+
+        <insert tableName="notification">
+            <column name="id">3</column>
+            <column name="app_user_id">2</column>
+            <column name="document_id">2</column>
+        </insert>
+
+    </changeSet>
+</databaseChangeLog>

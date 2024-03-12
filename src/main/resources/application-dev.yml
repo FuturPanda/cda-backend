@@ -1,0 +1,36 @@
+logging:
+  level:
+    com.resocom: DEBUG
+    org.apache.hc.client5.http: DEBUG
+    org.jooq.tools.LoggerListener: DEBUG
+
+server:
+  error:
+    include-exception: true
+    include-message: always
+    include-stacktrace: always
+
+spring:
+  datasource:
+    url: jdbc:mariadb://localhost:3306/notifs?allowMultiQueries=true
+    username: root
+    password: mypass
+    driver-class-name: org.mariadb.jdbc.Driver
+  liquibase:
+    contexts: test
+  mail:
+    host: dev2.dev-id.fr
+    port: 62525
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://sso.dev2.dev-id.fr
+          jwk-set-uri: https://sso.dev2.dev-id.fr/oauth/v2/keys
+        opaquetoken:
+          introspection-uri: https://sso.dev2.dev-id.fr/oauth/v2/introspect
+          client-id: 245921010421948418@resovip
+          client-secret: unused
+
+
+

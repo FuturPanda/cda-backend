@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Entity Graphs</title>
+</head>
+<body>
+<h1>Entity graphs in JPA</h1>
+
+
+<button onclick="getAllUsers()"> Get All users </button>
+
+<button onclick="getAllNotifs()"> Get All Notifications </button>
+
+<input type="text" class="btn-block" id="userId" />
+<button onclick="getSingleUser()"> Get Single User  </button>
+
+<button onclick="reset()"> Reset </button>
+<div id="container">
+    <h3 id="titleUsers">Users</h3>
+    <div id="users"></div>
+    <h3 id="titleUser">User</h3>
+    <div id="user"></div>
+    <h3 id="titleNotifs">Notifs</h3>
+    <div id="notifs"></div>
+</div>
+
+<script>
+    const getAllUsers = async () => {
+        console.log("All Users")
+        try {
+            const res = await fetch("/api/v1/graph/users");
+            console.log(res)
+            const data = await res.text()
+            console.log(data)
+            appendInfoTo(data, "users")
+        } catch (error) {
+            console.error("Error during fetching:", error);
+        }
+    }
+    const getSingleUser = async () => {
+        console.log("All Users")
+        const id = document.getElementById("userId").value
+        console.log(id)
+        try {
+            const res = await fetch(`/api/v1/graph/users/${id}`);
+            const data = await res.text()
+            console.log(data)
+           appendInfoTo(data, "user")
+        } catch (error) {
+            console.error("Error during fetching:", error);
+        }
+    }
+    const getAllNotifs = async () => {
+        console.log("All Notifications")
+        try {
+            const res = await fetch("/api/v1/graph/notifs");
+            const data = await res.text()
+            appendInfoTo(data, "notifs")
+        } catch (error) {
+            console.error("Error during fetching:", error);
+        }
+    }
+
+    function appendInfoTo(info, parentId) {
+        const div = document.createElement("div");
+        div.textContent = info;
+        document.getElementById(parentId).appendChild(div);
+    }
+
+    function reset() {
+        let usersDiv = document.getElementById("users")
+        let notifsDiv = document.getElementById("notifs")
+        let titleUsers = document.getElementById("titleUsers")
+        let titleUser = document.getElementById("titleUser")
+        let titleNotifs = document.getElementById("titleNotifs")
+        usersDiv.remove()
+        notifsDiv.remove()
+        usersDiv = document.createElement("div")
+        usersDiv.id = "users"
+        notifsDiv = document.createElement("div")
+        notifsDiv.id = "notifs"
+
+        document.getElementById("container").after()
+        document.getElementById("container").appendChild(usersDiv)
+    }
+
+</script>
+
+</body>
+</html>
