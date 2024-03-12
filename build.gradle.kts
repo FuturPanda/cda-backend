@@ -3,16 +3,24 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
 	id("org.springframework.boot") version "3.2.3"
 	id("io.spring.dependency-management") version "1.1.4"
+	id "org.sonarqube" version "4.4.1.3373"
 	kotlin("jvm") version "1.9.22"
 	kotlin("plugin.spring") version "1.9.22"
 }
-
 group = "com.example"
 version = "0.0.1-SNAPSHOT"
 
 java {
 	sourceCompatibility = JavaVersion.VERSION_17
 }
+
+sonar {
+	properties {
+		property "sonar.projectKey", "cda-backend"
+		property "sonar.projectName", "cda-backend"
+	}
+}
+
 
 repositories {
 	mavenCentral()
