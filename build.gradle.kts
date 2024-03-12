@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
 	id("org.springframework.boot") version "3.2.3"
 	id("io.spring.dependency-management") version "1.1.4"
-	id "org.sonarqube" version "4.4.1.3373"
+	id("org.sonarqube") version "4.4.1.3373"
 	kotlin("jvm") version "1.9.22"
 	kotlin("plugin.spring") version "1.9.22"
 }
@@ -16,8 +16,8 @@ java {
 
 sonar {
 	properties {
-		property "sonar.projectKey", "cda-backend"
-		property "sonar.projectName", "cda-backend"
+		property("sonar.projectKey", "cda-backend")
+		property("sonar.projectName", "cda-backend")
 	}
 }
 
