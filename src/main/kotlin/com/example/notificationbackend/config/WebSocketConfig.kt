@@ -36,8 +36,8 @@ class EventNotificationHandler : TextWebSocketHandler(){
     override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
         println(message)
         println("Handling")
-        if (session !in sessionList)
-            sessionList.addLast(session)
+       // if (session !in sessionList)
+           // sessionList.addLast(session)
         broadcast(message)
     }
 
