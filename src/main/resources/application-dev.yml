@@ -31,9 +31,7 @@ spring:
           introspection-uri: https://sso.dev2.dev-id.fr/oauth/v2/introspect
           client-id: 245921010421948418@resovip
           client-secret: unused
-app:
-  open-ai:
-    api-key: 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
+
 
 
 
